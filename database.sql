@@ -1,0 +1,78 @@
+-- BookNest schema for MySQL / MariaDB (XAMPP).
+-- The app runs this automatically on first visit, so importing it by hand is optional.
+-- `users` and `catalog` match your existing phpMyAdmin tables; missing pieces are added without deleting data.
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(191) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(50) NOT NULL DEFAULT 'user',
+  active INT NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS catalog (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  isbn VARCHAR(50) DEFAULT NULL,
+  genre VARCHAR(100) DEFAULT NULL,
+  description TEXT,
+  price DECIMAL(10,2) DEFAULT 0.00,
+  stock INT DEFAULT 0,
+  pages INT DEFAULT 0,
+  cover TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS shelf (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  catalog_id INT DEFAULT NULL,
+  title VARCHAR(255) NOT NULL,
+  author VARCHAR(255) NOT NULL,
+  isbn VARCHAR(50) DEFAULT NULL,
+  genre VARCHAR(100) DEFAULT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'want',
+  rating INT NOT NULL DEFAULT 0,
+  pages INT NOT NULL DEFAULT 0,
+  current_page INT NOT NULL DEFAULT 0,
+  cover TEXT,
+  notes TEXT,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_shelf_user (user_id),
+  CONSTRAINT fk_shelf_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS cart (
+  user_id INT NOT NULL,
+  catalog_id INT NOT NULL,
+  qty INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (user_id, catalog_id),
+  CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cart_book FOREIGN KEY (catalog_id) REFERENCES catalog(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'Pending',
+  total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  address TEXT,
+  phone VARCHAR(50) DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_orders_user (user_id),
+  CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL,
+  catalog_id INT DEFAULT NULL,
+  title VARCHAR(255) DEFAULT NULL,
+  price DECIMAL(10,2) DEFAULT 0.00,
+  qty INT NOT NULL DEFAULT 1,
+  CONSTRAINT fk_items_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+  CONSTRAINT fk_items_book FOREIGN KEY (catalog_id) REFERENCES catalog(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
